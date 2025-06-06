@@ -16,10 +16,10 @@ typedef const char* BBStr;
 
 namespace BlitzToolbox {
     _NODISCARD inline BBStr getCharPtr(const std::string& str) {
-        char* cha = new char[str.size() + 1];
-        memcpy(cha, str.c_str(), str.size() + 1);
-        const char* p = cha;
-        return p;
+        static std::string temp;
+        temp.clear();
+        temp = str;
+        return temp.c_str();
     }
 
     _NODISCARD _CONSTEXPR20 std::string replace_all(const std::string& string, const std::string& pattern, const std::string& newpat) {

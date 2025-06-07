@@ -221,7 +221,7 @@ BLITZ3D(Value*) JsonGetArrayValue(Value* object, int index) {
 }
 
 BLITZ3D(int) JsonGetArrayCapacity(Value* object) {
-    if (object && object->IsArray()) {
+    if (object != nullptr && object->IsArray()) {
         return object->GetArray().Capacity();
     }
     else {

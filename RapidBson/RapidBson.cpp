@@ -128,27 +128,27 @@ BLITZ3D(int) JsonHasMember(Value* object, BBStr name) {
 }
 
 BLITZ3D(int) JsonIsString(Value* object) {
-    return (object != nullptr && object->IsString());
+    return (object && object->IsString());
 }
 
 BLITZ3D(int) JsonIsInt(Value* object) {
-    return (object != nullptr && object->IsInt());
+    return (object && object->IsInt());
 }
 
 BLITZ3D(int) JsonIsFloat(Value* object) {
-    return (object != nullptr && object->IsFloat());
+    return (object && object->IsFloat());
 }
 
 BLITZ3D(int) JsonIsBool(Value* object) {
-    return (object != nullptr && object->IsBool());
+    return (object && object->IsBool());
 }
 
 BLITZ3D(int) JsonIsArray(Value* object) {
-    return (object != nullptr && object->IsArray());
+    return (object && object->IsArray());
 }
 
 BLITZ3D(int) JsonIsObject(Value* object) {
-    return (object != nullptr && object->IsObject());
+    return (object && object->IsObject());
 }
 
 BLITZ3D(int) JsonIsNull(Value* object) {
@@ -221,7 +221,7 @@ BLITZ3D(Value*) JsonGetArrayValue(Value* object, int index) {
 }
 
 BLITZ3D(int) JsonGetArrayCapacity(Value* object) {
-    if (object != nullptr && object->IsArray()) {
+    if (object && object->IsArray()) {
         return object->GetArray().Capacity();
     }
     else {

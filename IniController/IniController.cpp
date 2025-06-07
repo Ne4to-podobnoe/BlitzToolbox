@@ -48,6 +48,29 @@ BLITZ3D(void) IniWriteBuffer(BBStr path, bool clearPrevious) {
 	IniBuffer[NORMALIZE_PATH(path)] = buffer;
 }
 
+BLITZ3D(void) IniAddBuffer(BBStr target, BBStr path) {
+	std::ifstream file(path);
+	if (!file.is_open() || !IniBuffer.contains(NORMALIZE_PATH(target))) return;
+
+	std::string line, section = "";
+	while (std::getline(file, line)) {
+		if (line[0] == ';') continue;
+		if (line[0] == '[' && line[line.length() - 1] == ']') {
+			section = std::string(line, 1, line.length() - 2);
+			continue;
+		}
+		if (line.find('=') != std::string::npos) {
+			if (section == "") continue;
+			std::string key = line.substr(0, line.find('='));
+			if (key[key.length() - 1] == ' ') key = key.substr(0, key.length() - 1);
+			std::string value = line.substr(line.find('=') + 1);
+			if (value[0] == ' ') value = value.substr(1);
+			IniBuffer[NORMALIZE_PATH(target)][section][key] = value;
+		}
+	}
+	file.close();
+}
+
 /* Read INI */
 
 BLITZ3D(BBStr) IniGetString(BBStr path, BBStr section, BBStr key, BBStr defaultValue, bool allowBuffer) {
@@ -151,10 +174,10 @@ BLITZ3D(bool) IniBufferKeyExist(BBStr path, BBStr section, BBStr key) {
 * @return Value of key, or default value.
 */
 BLITZ3D(BBStr) IniGetBufferString(BBStr path, BBStr section, BBStr key, BBStr defaultValue) {
-	if (IniBuffer[NORMALIZE_PATH(path)][section].contains(key))
-		return IniBuffer[NORMALIZE_PATH(path)][section][key].c_str();
-	else
-		return defaultValue;
+	auto& map = IniBuffer[NORMALIZE_PATH(path)][section];
+	auto it = map.find(key);
+
+	return it != map.end() ? it->second.c_str() : defaultValue;
 }
 
 BLITZ3D(int) IniGetBufferInt(BBStr path, BBStr section, BBStr key, int defaultValue) {

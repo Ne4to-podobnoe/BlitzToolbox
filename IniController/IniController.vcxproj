@@ -142,7 +142,7 @@ copy /y $(SolutionDir)$(ProjectName)\Example.bb $(SolutionDir)Build\$(ProjectNam
     <ClCompile Include="IniController.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Example.bb"/>
+    <None Include="Example.bb" />
     <None Include="IniController.bb" />
     <None Include="IniController.decls" />
   </ItemGroup>

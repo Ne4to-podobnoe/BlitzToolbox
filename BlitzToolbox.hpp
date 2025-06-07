@@ -6,12 +6,15 @@
 #include <string>
 #include <vector>
 #include <filesystem>
-#include <Windows.h>
+
+#ifdef BLITZ3DTSS
+    #include <Windows.h>
+    #define BLITZ3D_RUNTIME_ERROR 0xE0000001
+    #define BLITZ3D_RUNTIME_EXCEPTION 0xE0000002
+    #define _NORETURN [[noreturn]]
+#endif
 
 #define BLITZ3D(x) extern "C" __declspec(dllexport) x _stdcall
-#define BLITZ3D_RUNTIME_ERROR 0xE0000001
-#define BLITZ3D_RUNTIME_EXCEPTION 0xE0000002
-#define _NORETURN [[noreturn]]
 typedef const char* BBStr;
 
 namespace BlitzToolbox {
@@ -85,29 +88,25 @@ namespace BlitzToolbox {
     }
 
 #ifdef BLITZ3DTSS
-    _NORETURN inline void runtime_error(BBStr message) {
+    _NORETURN inline void runtime_error(const std::string& message) {
         ULONG_PTR args[1]{};
-        args[0] = reinterpret_cast<ULONG_PTR>(message);
+        args[0] = reinterpret_cast<ULONG_PTR>(message.c_str());
         RaiseException(BLITZ3D_RUNTIME_ERROR, 0, 1, args);
     }
 
-    _NORETURN inline void runtime_error(const std::string& message) {
-        runtime_error(getCharPtr(message));
-    }
-
-    inline void runtime_exception(BBStr function, BBStr message) {
+    inline void runtime_exception(const std::string& function, const std::string& message) {
         ULONG_PTR args[2]{};
-        args[0] = reinterpret_cast<ULONG_PTR>(function);
-        args[1] = reinterpret_cast<ULONG_PTR>(message);
+        args[0] = reinterpret_cast<ULONG_PTR>(function.c_str());
+        args[1] = reinterpret_cast<ULONG_PTR>(message.c_str());
         RaiseException(BLITZ3D_RUNTIME_EXCEPTION, 0, 2, args);
     }
 
-    inline void runtime_exception(BBStr function, const std::string& message) {
-        runtime_exception(function, getCharPtr(message));
+    inline void runtime_exception(const std::string& function, const std::string& message) {
+        runtime_exception(function, message);
     }
 
     inline void runtime_exception(const std::string& function, const std::string& message) {
-        runtime_exception(getCharPtr(function), getCharPtr(message));
+        runtime_exception(function, message);
     }
 #endif
 }

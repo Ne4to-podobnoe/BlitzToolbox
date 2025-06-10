@@ -30,28 +30,13 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserve
 using namespace rapidjson;
 using Array = GenericValue<UTF8<>>::Array;
 
-struct __Writer {
-    StringBuffer* buffer;
-    Writer<StringBuffer>* writer;
-
-    __Writer() {
-        this->buffer = new StringBuffer();
-        this->writer = new Writer(*buffer);
-    }
-
-    ~__Writer() {
-        delete buffer;
-        delete writer;
-    }
-};
-
 enum __SuppressWarning {
     kNoSuppressedWarnings,
     kNoRuntimeExceptions,
     kNoExceptionLogs
 };
 
-static int _SuppressedWarnings = kNoSuppressedWarnings;
+static int _SuppressedWarnings = kNoRuntimeExceptions;
 
 constexpr void __rapidbson_runtime_exception(BBStr function, const std::string& message) {
     if (!(_SuppressedWarnings & kNoRuntimeExceptions)) {
@@ -234,59 +219,5 @@ BLITZ3D(void) JsonFreeDocument(Document* object) {
     if (object) delete object;
     else {
         __rapidbson_runtime_exception("JsonFreeDocument", "Invalid argument!");
-    }
-}
-
-BLITZ3D(__Writer*) JsonCreateWriter() {
-    return new __Writer();
-}
-
-BLITZ3D(__Writer*) JsonGetNewWriter(Value* object) {
-    if (!object) {
-        __rapidbson_runtime_exception("JsonGetNewWriter", "Invalid argument!");
-        return 0;
-    }
-
-    __Writer* writer = new __Writer();
-    object->Accept(*writer->writer);
-    return writer;
-}
-
-BLITZ3D(void) JsonDestroyWriter(__Writer* object) {
-    if (object) delete object;
-    else {
-        __rapidbson_runtime_exception("JsonDestroyWriter", "Invalid argument!");
-    }
-}
-
-BLITZ3D(BBStr) JsonGetWriterString(__Writer* object) {
-    if (object) {
-        return object->buffer->GetString();
-    }
-    else {
-        __rapidbson_runtime_exception("JsonGetWriterString", "Invalid argument!");
-    }
-}
-
-BLITZ3D(int) JsonGetWriterStringLength(__Writer* object) {
-    if (object) {
-        return object->buffer->GetLength();
-    }
-    else {
-        __rapidbson_runtime_exception("JsonGetWriterStringLength", "Invalid argument!");
-    }
-}
-
-BLITZ3D(BBStr) JsonGetFormattedWriterString(__Writer* object) {
-    if (object) {
-        Document document;
-        document.Parse(object->buffer->GetString());
-        StringBuffer buffer;
-        PrettyWriter<StringBuffer> writer(buffer);
-        document.Accept(writer);
-        return BlitzToolbox::getCharPtr(buffer.GetString());
-    }
-    else {
-        __rapidbson_runtime_exception("JsonGetFormattedJsonFromWriter", "Invalid argument!");
     }
 }

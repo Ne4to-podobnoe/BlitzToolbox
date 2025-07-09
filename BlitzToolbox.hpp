@@ -100,5 +100,8 @@ namespace BlitzToolbox {
         args[1] = reinterpret_cast<ULONG_PTR>(message.c_str());
         RaiseException(BLITZ3D_RUNTIME_EXCEPTION, 0, 2, args);
     }
+#else
+    inline void runtime_error(const std::string& message) {}
+    inline void runtime_exception(const std::string& function, const std::string& message) { }
 #endif
 }

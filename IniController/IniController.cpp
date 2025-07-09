@@ -50,7 +50,7 @@ BLITZ3D(void) IniWriteBuffer(BBStr path, bool clearPrevious) {
 
 BLITZ3D(void) IniAddBuffer(BBStr target, BBStr path) {
 	std::ifstream file(path);
-	if (!file.is_open() || !IniBuffer.contains(NORMALIZE_PATH(target))) return;
+	if (!file.is_open()) return;
 
 	std::string line, section = "";
 	while (std::getline(file, line)) {

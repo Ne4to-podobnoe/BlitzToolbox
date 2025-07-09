@@ -9,15 +9,12 @@
 /// IN DEVELOPING STAGE ///
 ///////////////////////////
 
-#define BLITZ3DTSS
-
 #include "rapidjson/document.h"
-#include "rapidjson/prettywriter.h"
 #include <fstream>
 #include <string>
 #include <iostream>
-#include <Windows.h>
 #include "../BlitzToolbox.hpp"
+#include <Windows.h>
 
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
     if (ul_reason_for_call == DLL_PROCESS_ATTACH)
@@ -38,7 +35,8 @@ enum __SuppressWarning {
 
 static int _SuppressedWarnings = kNoRuntimeExceptions;
 
-constexpr void __rapidbson_runtime_exception(BBStr function, const std::string& message) {
+#ifdef BLITZ3DTSS
+   constexpr void __rapidbson_runtime_exception(BBStr function, const std::string& message) {
     if (!(_SuppressedWarnings & kNoRuntimeExceptions)) {
         BlitzToolbox::runtime_exception(function, message);
     }
@@ -46,6 +44,11 @@ constexpr void __rapidbson_runtime_exception(BBStr function, const std::string& 
         std::cerr << std::format("{}: {}\n", function, message);
     }
 }
+#else
+void __rapidbson_runtime_exception(BBStr function, const std::string& message) {
+
+}
+#endif
 
 BLITZ3D(void) JsonSuppressWarnings(int flags) {
     _SuppressedWarnings = flags;
@@ -113,27 +116,27 @@ BLITZ3D(int) JsonHasMember(Value* object, BBStr name) {
 }
 
 BLITZ3D(int) JsonIsString(Value* object) {
-    return (object && object->IsString());
+    return (object != 0 && object->IsString());
 }
 
 BLITZ3D(int) JsonIsInt(Value* object) {
-    return (object && object->IsInt());
+    return (object != 0 && object->IsInt());
 }
 
 BLITZ3D(int) JsonIsFloat(Value* object) {
-    return (object && object->IsFloat());
+    return (object != 0 && object->IsFloat());
 }
 
 BLITZ3D(int) JsonIsBool(Value* object) {
-    return (object && object->IsBool());
+    return (object != 0 && object->IsBool());
 }
 
 BLITZ3D(int) JsonIsArray(Value* object) {
-    return (object && object->IsArray());
+    return (object != 0 && object->IsArray());
 }
 
 BLITZ3D(int) JsonIsObject(Value* object) {
-    return (object && object->IsObject());
+    return (object != 0 && object->IsObject());
 }
 
 BLITZ3D(int) JsonIsNull(Value* object) {

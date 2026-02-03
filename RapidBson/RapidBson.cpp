@@ -102,6 +102,16 @@ BLITZ3D(int) JsonGetParseErrorCode(Document* document) {
     }
 }
 
+BLITZ3D(int) JsonGetParseErrorOffset(Document* document) {
+    if (document) {
+        return document->GetErrorOffset();
+    }
+    else {
+        __rapidbson_runtime_exception("JsonGetParseErrorOffset", "Invalid argument!");
+        return -1;
+    }
+}
+
 BLITZ3D(Value*) JsonGetValue(Value* object, BBStr name) {
     if (!object || !object->HasMember(name)) return 0;
     return &(*object)[name];

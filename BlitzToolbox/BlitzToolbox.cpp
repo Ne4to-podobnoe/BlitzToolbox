@@ -82,6 +82,7 @@ BLITZ3D(void) DownloadFileThread(BBStr url, BBStr file) {
 }
 
 typedef std::unordered_map<std::string, int> S2IMap;
+typedef std::unordered_map<int, int> I2IMap;
 
 BLITZ3D(S2IMap*) CreateS2IMap() {
     return new S2IMap;
@@ -114,4 +115,89 @@ BLITZ3D(void) ClearS2IMap(S2IMap* map) {
 BLITZ3D(void) DestroyS2IMap(S2IMap* map) {
     delete map;
     map = nullptr;
+}
+
+// I2IMap
+BLITZ3D(I2IMap*) CreateI2IMap() {
+    return new I2IMap;
+}
+
+BLITZ3D(int) I2IMapSize(I2IMap* map) {
+    return (int)map->size();
+}
+
+BLITZ3D(void) I2IMapErase(I2IMap* map, int key) {
+    map->erase(key);
+}
+
+BLITZ3D(void) I2IMapSet(I2IMap* map, int key, int value) {
+    (*map)[key] = value;
+}
+
+BLITZ3D(int) I2IMapGet(I2IMap* map, int key) {
+    auto it = map->find(key);
+    if (it != map->end()) return it->second;
+    return 0;
+}
+
+BLITZ3D(int) I2IMapContains(I2IMap* map, int key) {
+    return map->count(key);
+}
+
+BLITZ3D(void) ClearI2IMap(I2IMap* map) {
+    map->clear();
+}
+
+BLITZ3D(void) DestroyI2IMap(I2IMap* map) {
+    delete map;
+}
+
+// IntVector
+typedef std::vector<int> IntVector;
+
+BLITZ3D(IntVector*) CreateIntVector() {
+    return new IntVector;
+}
+
+BLITZ3D(int) IntVectorSize(IntVector* vec) {
+    return (int)vec->size();
+}
+
+BLITZ3D(void) IntVectorPushBack(IntVector* vec, int value) {
+    vec->push_back(value);
+}
+
+BLITZ3D(void) IntVectorPopBack(IntVector* vec) {
+    if (!vec->empty()) vec->pop_back();
+}
+
+BLITZ3D(int) IntVectorGet(IntVector* vec, int index) {
+    if (index >= 0 && index < (int)vec->size()) {
+        return (*vec)[index];
+    }
+    return 0;
+}
+
+BLITZ3D(void) IntVectorSet(IntVector* vec, int index, int value) {
+    if (index >= 0 && index < (int)vec->size()) {
+        (*vec)[index] = value;
+    }
+}
+
+BLITZ3D(void) IntVectorErase(IntVector* vec, int index) {
+    if (index >= 0 && index < (int)vec->size()) {
+        vec->erase(vec->begin() + index);
+    }
+}
+
+BLITZ3D(void) IntVectorReserve(IntVector* vec, int capacity) {
+    vec->reserve(capacity);
+}
+
+BLITZ3D(void) ClearIntVector(IntVector* vec) {
+    vec->clear();
+}
+
+BLITZ3D(void) DestroyIntVector(IntVector* vec) {
+    delete vec;
 }

@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#include <Windows.h>
 
 #ifdef BLITZ3DTSS
-    #include <Windows.h>
     #define BLITZ3D_RUNTIME_ERROR 0xE0000001
     #define BLITZ3D_RUNTIME_EXCEPTION 0xE0000002
     #define _NORETURN [[noreturn]]
@@ -85,6 +85,24 @@ namespace BlitzToolbox {
     _NODISCARD _CONSTEXPR20 std::string normalize_path(const std::filesystem::path& path) {
         // Windows is not case sensitive
         return to_lower_string(std::filesystem::absolute(path).lexically_normal().generic_string());
+    }
+
+    std::wstring UTF8ToWide(const std::string& str) {
+        if (str.empty()) return std::wstring();
+        int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), nullptr, 0);
+        if (size_needed <= 0) return std::wstring();
+        std::wstring wstrTo(size_needed, 0);
+        MultiByteToWideChar(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), &wstrTo[0], size_needed);
+        return wstrTo;
+    }
+
+    std::string WideToUTF8(const std::wstring& str) {
+        if (str.empty()) return std::string();
+        int size_needed = WideCharToMultiByte(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), nullptr, 0, nullptr, nullptr);
+        if (size_needed <= 0) return std::string();
+        std::string result(size_needed, 0);
+        WideCharToMultiByte(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), &result[0], size_needed, nullptr, nullptr);
+        return result;
     }
 
 #ifdef BLITZ3DTSS

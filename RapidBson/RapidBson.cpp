@@ -55,7 +55,7 @@ BLITZ3D(void) JsonSuppressWarnings(int flags) {
 }
 
 BLITZ3D(Value*) JsonParseFromFile(BBStr path) {
-    std::ifstream file(path);
+    std::ifstream file(BlitzToolbox::UTF8ToWide(path));
     if (!file.good()) {
         __rapidbson_runtime_exception("JsonParseFromFile", std::format("File does not exist: {}", path));
         return 0;

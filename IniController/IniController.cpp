@@ -25,7 +25,7 @@ static IniMap<std::string, IniMap<std::string, IniMap<std::string, std::string>>
 BLITZ3D(void) IniWriteBuffer(BBStr path, bool clearPrevious) {
 	if (clearPrevious) IniBuffer[NORMALIZE_PATH(path)].clear();
 	IniMap<std::string, IniMap<std::string, std::string>> buffer;
-	std::ifstream file(path);
+	std::ifstream file(BlitzToolbox::UTF8ToWide(path));
 	if (!file.is_open()) return;
 
 	std::string line, section = "";
@@ -49,7 +49,7 @@ BLITZ3D(void) IniWriteBuffer(BBStr path, bool clearPrevious) {
 }
 
 BLITZ3D(void) IniAddBuffer(BBStr target, BBStr path) {
-	std::ifstream file(path);
+	std::ifstream file(BlitzToolbox::UTF8ToWide(path));
 	if (!file.is_open()) return;
 
 	std::string line, section = "";
@@ -80,7 +80,7 @@ BLITZ3D(BBStr) IniGetString(BBStr path, BBStr section, BBStr key, BBStr defaultV
 		}
 	}
 
-	std::ifstream file(path);
+	std::ifstream file(BlitzToolbox::UTF8ToWide(path));
 	std::string line, section1 = "";
 	while (std::getline(file, line)) {
 		if (line[0] == ';') continue;
@@ -117,7 +117,7 @@ BLITZ3D(bool) IniSectionExist(BBStr path, BBStr section, bool allowBuffer) {
 		if (contain) return contain;
 	}
 
-	std::ifstream file(path);
+	std::ifstream file(BlitzToolbox::UTF8ToWide(path));
 	std::string line, section1 = "";
 	while (std::getline(file, line)) {
 		if (line[0] == ';') continue;
@@ -140,7 +140,7 @@ BLITZ3D(bool) IniKeyExist(BBStr path, BBStr section, BBStr key, bool allowBuffer
 		if (contain) return contain;
 	}
 
-	std::ifstream file(path);
+	std::ifstream file(BlitzToolbox::UTF8ToWide(path));
 	std::string line, section1 = "";
 	while (std::getline(file, line)) {
 		if (line[0] == ';') continue;
@@ -191,8 +191,12 @@ BLITZ3D(float) IniGetBufferFloat(BBStr path, BBStr section, BBStr key, float def
 /* Write INI */
 
 BLITZ3D(void) IniWriteString(BBStr path, BBStr section, BBStr key, BBStr value, bool updateBuffer) {
-	// maybe i will write one by my self but im too lazy lol
-	WritePrivateProfileStringA(section, key, value, NORMALIZE_PATH(path).c_str());
+	WritePrivateProfileStringW(
+		BlitzToolbox::UTF8ToWide(section).c_str(), 
+		BlitzToolbox::UTF8ToWide(key).c_str(), 
+		BlitzToolbox::UTF8ToWide(value).c_str(), 
+		BlitzToolbox::UTF8ToWide(NORMALIZE_PATH(path)).c_str());
+
 	if (updateBuffer) IniBuffer[NORMALIZE_PATH(path)][section][key] = value;
 }
 
@@ -205,16 +209,28 @@ BLITZ3D(void) IniWriteFloat(BBStr path, BBStr section, BBStr key, float value, b
 }
 
 BLITZ3D(void) IniRemoveKey(BBStr path, BBStr section, BBStr key, bool updateBuffer) {
-	WritePrivateProfileStringA(section, key, NULL, std::filesystem::absolute(path).generic_string().c_str());
+	WritePrivateProfileStringW(
+		BlitzToolbox::UTF8ToWide(section).c_str(), 
+		BlitzToolbox::UTF8ToWide(key).c_str(), 
+		NULL, 
+		BlitzToolbox::UTF8ToWide(std::filesystem::absolute(path).generic_string()).c_str());
+
 	if (updateBuffer) IniBuffer[NORMALIZE_PATH(path)][section].erase(key);
 }
 
 BLITZ3D(void) IniCreateSection(BBStr path, BBStr section) {
-	WritePrivateProfileSectionA(section, "", std::filesystem::absolute(path).generic_string().c_str());
+	WritePrivateProfileSectionW(
+		BlitzToolbox::UTF8ToWide(section).c_str(),
+		L"", 
+		BlitzToolbox::UTF8ToWide(std::filesystem::absolute(path).generic_string()).c_str());
 }
 
 BLITZ3D(void) IniRemoveSection(BBStr path, BBStr section, bool updateBuffer) {
-	WritePrivateProfileSectionA(section, NULL, std::filesystem::absolute(path).generic_string().c_str());
+	WritePrivateProfileSectionW(
+		BlitzToolbox::UTF8ToWide(section).c_str(), 
+		NULL, 
+		BlitzToolbox::UTF8ToWide(std::filesystem::absolute(path).generic_string()).c_str());
+
 	if (updateBuffer) IniBuffer[NORMALIZE_PATH(path)].erase(section);
 }
 

@@ -184,6 +184,12 @@ BLITZ3D(void) IntVectorSet(IntVector* vec, int index, int value) {
     }
 }
 
+BLITZ3D(int) IntVectorFind(IntVector* vec, int value) {
+    auto it = std::find(vec->begin(), vec->end(), value);
+    if (it != vec->end()) return (int)std::distance(vec->begin(), it);
+    return -1;
+}
+
 BLITZ3D(void) IntVectorErase(IntVector* vec, int index) {
     if (index >= 0 && index < (int)vec->size()) {
         vec->erase(vec->begin() + index);

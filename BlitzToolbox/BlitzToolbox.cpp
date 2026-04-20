@@ -83,6 +83,7 @@ BLITZ3D(void) DownloadFileThread(BBStr url, BBStr file) {
 
 typedef std::unordered_map<std::string, int> S2IMap;
 typedef std::unordered_map<int, int> I2IMap;
+typedef std::unordered_map<std::int64_t, int> L2IMap;
 
 BLITZ3D(S2IMap*) CreateS2IMap() {
     return new S2IMap;
@@ -149,6 +150,45 @@ BLITZ3D(void) ClearI2IMap(I2IMap* map) {
 }
 
 BLITZ3D(void) DestroyI2IMap(I2IMap* map) {
+    delete map;
+}
+
+// L2IMap
+inline std::int64_t MakeKey64(int low, int high) {
+    return ((std::int64_t)(unsigned int)high << 32) | (unsigned int)low;
+}
+
+BLITZ3D(L2IMap*) CreateL2IMap() {
+    return new L2IMap;
+}
+
+BLITZ3D(int) L2IMapSize(L2IMap* map) {
+    return (int)map->size();
+}
+
+BLITZ3D(void) L2IMapErase(L2IMap* map, int low, int high) {
+    map->erase(MakeKey64(low, high));
+}
+
+BLITZ3D(void) L2IMapSet(L2IMap* map, int low, int high, int value) {
+    (*map)[MakeKey64(low, high)] = value;
+}
+
+BLITZ3D(int) L2IMapGet(L2IMap* map, int low, int high) {
+    auto it = map->find(MakeKey64(low, high));
+    if (it != map->end()) return it->second;
+    return 0;
+}
+
+BLITZ3D(int) L2IMapContains(L2IMap* map, int low, int high) {
+    return (int)map->count(MakeKey64(low, high));
+}
+
+BLITZ3D(void) ClearL2IMap(L2IMap* map) {
+    map->clear();
+}
+
+BLITZ3D(void) DestroyL2IMap(L2IMap* map) {
     delete map;
 }
 

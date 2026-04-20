@@ -2,7 +2,7 @@
 * IniController - A part of BlitzToolbox
 * Reading & writing INI files.
 * 
-* v1.08 2024.9.16
+* v1.09 20.04.2026
 */
 
 #include "resource.h"
@@ -10,6 +10,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <Windows.h>
+#include "simpleini/SimpleIni.h"
 
 #ifdef NORMALIZE_PATH
 #define NORMALIZE_PATH(path) BlitzToolbox::normalize_path(std::string(path))
@@ -24,51 +25,39 @@ static IniMap<std::string, IniMap<std::string, IniMap<std::string, std::string>>
 
 BLITZ3D(void) IniWriteBuffer(BBStr path, bool clearPrevious) {
 	if (clearPrevious) IniBuffer[NORMALIZE_PATH(path)].clear();
-	IniMap<std::string, IniMap<std::string, std::string>> buffer;
-	std::ifstream file(BlitzToolbox::UTF8ToWide(path));
-	if (!file.is_open()) return;
 
-	std::string line, section = "";
-	while (std::getline(file, line)) {
-		if (line[0] == ';') continue;
-		if (line[0] == '[' && line[line.length() - 1] == ']') {
-			section = std::string(line, 1, line.length() - 2);
-			continue;
-		}
-		if (line.find('=') != std::string::npos) {
-			if (section == "") continue;
-			std::string key = line.substr(0, line.find('='));
-			if (key[key.length() - 1] == ' ') key = key.substr(0, key.length() - 1);
-			std::string value = line.substr(line.find('=') + 1);
-			if (value[0] == ' ') value = value.substr(1);
-			buffer[section][key] = value;
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	if (ini.LoadFile(BlitzToolbox::UTF8ToWide(path).c_str()) < 0) return;
+
+	IniMap<std::string, IniMap<std::string, std::string>> buffer;
+
+	CSimpleIniA::TNamesDepend sections;
+	ini.GetAllSections(sections);
+	for (const auto& sec : sections) {
+		CSimpleIniA::TNamesDepend keys;
+		ini.GetAllKeys(sec.pItem, keys);
+		for (const auto& key : keys) {
+			buffer[sec.pItem][key.pItem] = ini.GetValue(sec.pItem, key.pItem, "");
 		}
 	}
-	file.close();
 	IniBuffer[NORMALIZE_PATH(path)] = buffer;
 }
 
 BLITZ3D(void) IniAddBuffer(BBStr target, BBStr path) {
-	std::ifstream file(BlitzToolbox::UTF8ToWide(path));
-	if (!file.is_open()) return;
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	if (ini.LoadFile(BlitzToolbox::UTF8ToWide(path).c_str()) < 0) return;
 
-	std::string line, section = "";
-	while (std::getline(file, line)) {
-		if (line[0] == ';') continue;
-		if (line[0] == '[' && line[line.length() - 1] == ']') {
-			section = std::string(line, 1, line.length() - 2);
-			continue;
-		}
-		if (line.find('=') != std::string::npos) {
-			if (section == "") continue;
-			std::string key = line.substr(0, line.find('='));
-			if (key[key.length() - 1] == ' ') key = key.substr(0, key.length() - 1);
-			std::string value = line.substr(line.find('=') + 1);
-			if (value[0] == ' ') value = value.substr(1);
-			IniBuffer[NORMALIZE_PATH(target)][section][key] = value;
+	CSimpleIniA::TNamesDepend sections;
+	ini.GetAllSections(sections);
+	for (const auto& sec : sections) {
+		CSimpleIniA::TNamesDepend keys;
+		ini.GetAllKeys(sec.pItem, keys);
+		for (const auto& key : keys) {
+			IniBuffer[NORMALIZE_PATH(target)][sec.pItem][key.pItem] = ini.GetValue(sec.pItem, key.pItem, "");
 		}
 	}
-	file.close();
 }
 
 /* Read INI */
@@ -80,27 +69,14 @@ BLITZ3D(BBStr) IniGetString(BBStr path, BBStr section, BBStr key, BBStr defaultV
 		}
 	}
 
-	std::ifstream file(BlitzToolbox::UTF8ToWide(path));
-	std::string line, section1 = "";
-	while (std::getline(file, line)) {
-		if (line[0] == ';') continue;
-		if (line[0] == '[' && line[line.length() - 1] == ']') {
-			section1 = std::string(line, 1, line.length() - 2);
-			continue;
-		}
-		if (line.find('=') != std::string::npos) {
-			if (section1 == "") continue;
-			std::string key1 = line.substr(0, line.find('='));
-			if (key1[key1.length() - 1] == ' ') key1 = key1.substr(0, key1.length() - 1);
-			if ((section1 == section) && (key == key1)) {
-				std::string value = line.substr(line.find('=') + 1);
-				if (value[0] == ' ') value = value.substr(1);
-				return BlitzToolbox::getCharPtr(value);
-			}
-		}
-	}
-	file.close();
-	return defaultValue;
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	if (ini.LoadFile(BlitzToolbox::UTF8ToWide(path).c_str()) < 0) return defaultValue;
+
+	const char* val = ini.GetValue(section, key, nullptr);
+	if (!val) return defaultValue;
+
+	return BlitzToolbox::getCharPtr(val);
 }
 
 BLITZ3D(int) IniGetInt(BBStr path, BBStr section, BBStr key, int defaultValue, bool allowBuffer) {
@@ -113,21 +89,14 @@ BLITZ3D(float) IniGetFloat(BBStr path, BBStr section, BBStr key, float defaultVa
 
 BLITZ3D(bool) IniSectionExist(BBStr path, BBStr section, bool allowBuffer) {
 	if (allowBuffer) {
-		bool contain = IniBuffer[NORMALIZE_PATH(path)].contains(section);
-		if (contain) return contain;
+		if (IniBuffer[NORMALIZE_PATH(path)].contains(section)) return true;
 	}
 
-	std::ifstream file(BlitzToolbox::UTF8ToWide(path));
-	std::string line, section1 = "";
-	while (std::getline(file, line)) {
-		if (line[0] == ';') continue;
-		if (line[0] == '[' && line[line.length() - 1] == ']') {
-			section1 = std::string(line, 1, line.length() - 2);
-			if (section == section1) return true;
-		}
-	}
-	file.close();
-	return false;
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	if (ini.LoadFile(BlitzToolbox::UTF8ToWide(path).c_str()) < 0) return false;
+
+	return ini.GetSectionSize(section) >= 0;
 }
 
 BLITZ3D(bool) IniBufferSectionExist(BBStr path, BBStr section) {
@@ -136,27 +105,14 @@ BLITZ3D(bool) IniBufferSectionExist(BBStr path, BBStr section) {
 
 BLITZ3D(bool) IniKeyExist(BBStr path, BBStr section, BBStr key, bool allowBuffer) {
 	if (allowBuffer) {
-		bool contain = IniBuffer[NORMALIZE_PATH(path)][section].contains(key);
-		if (contain) return contain;
+		if (IniBuffer[NORMALIZE_PATH(path)][section].contains(key)) return true;
 	}
 
-	std::ifstream file(BlitzToolbox::UTF8ToWide(path));
-	std::string line, section1 = "";
-	while (std::getline(file, line)) {
-		if (line[0] == ';') continue;
-		if (line[0] == '[' && line[line.length() - 1] == ']') {
-			section1 = std::string(line, 1, line.length() - 2);
-			continue;
-		}
-		if (line.find('=') != std::string::npos) {
-			if (section1 == "") continue;
-			std::string key1 = line.substr(0, line.find('='));
-			if (key1[key1.length() - 1] == ' ') key1 = key1.substr(0, key1.length() - 1);
-			if ((section1 == section) && (key == key1)) return true;
-		}
-	}
-	file.close();
-	return false;
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	if (ini.LoadFile(BlitzToolbox::UTF8ToWide(path).c_str()) < 0) return false;
+
+	return ini.GetValue(section, key) != nullptr;
 }
 
 BLITZ3D(bool) IniBufferKeyExist(BBStr path, BBStr section, BBStr key) {
@@ -191,11 +147,14 @@ BLITZ3D(float) IniGetBufferFloat(BBStr path, BBStr section, BBStr key, float def
 /* Write INI */
 
 BLITZ3D(void) IniWriteString(BBStr path, BBStr section, BBStr key, BBStr value, bool updateBuffer) {
-	WritePrivateProfileStringW(
-		BlitzToolbox::UTF8ToWide(section).c_str(), 
-		BlitzToolbox::UTF8ToWide(key).c_str(), 
-		BlitzToolbox::UTF8ToWide(value).c_str(), 
-		BlitzToolbox::UTF8ToWide(NORMALIZE_PATH(path)).c_str());
+	std::wstring wPath = BlitzToolbox::UTF8ToWide(NORMALIZE_PATH(path));
+
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	ini.LoadFile(wPath.c_str());
+
+	ini.SetValue(section, key, value);
+	ini.SaveFile(wPath.c_str());
 
 	if (updateBuffer) IniBuffer[NORMALIZE_PATH(path)][section][key] = value;
 }
@@ -209,27 +168,38 @@ BLITZ3D(void) IniWriteFloat(BBStr path, BBStr section, BBStr key, float value, b
 }
 
 BLITZ3D(void) IniRemoveKey(BBStr path, BBStr section, BBStr key, bool updateBuffer) {
-	WritePrivateProfileStringW(
-		BlitzToolbox::UTF8ToWide(section).c_str(), 
-		BlitzToolbox::UTF8ToWide(key).c_str(), 
-		NULL, 
-		BlitzToolbox::UTF8ToWide(std::filesystem::absolute(path).generic_string()).c_str());
+	std::wstring wPath = BlitzToolbox::UTF8ToWide(NORMALIZE_PATH(path));
+
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	if (ini.LoadFile(wPath.c_str()) == SI_OK) {
+		ini.Delete(section, key);
+		ini.SaveFile(wPath.c_str());
+	}
 
 	if (updateBuffer) IniBuffer[NORMALIZE_PATH(path)][section].erase(key);
 }
 
 BLITZ3D(void) IniCreateSection(BBStr path, BBStr section) {
-	WritePrivateProfileSectionW(
-		BlitzToolbox::UTF8ToWide(section).c_str(),
-		L"", 
-		BlitzToolbox::UTF8ToWide(std::filesystem::absolute(path).generic_string()).c_str());
+	std::wstring wPath = BlitzToolbox::UTF8ToWide(NORMALIZE_PATH(path));
+
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	ini.LoadFile(wPath.c_str());
+
+	ini.SetValue(section, nullptr, nullptr);
+	ini.SaveFile(wPath.c_str());
 }
 
 BLITZ3D(void) IniRemoveSection(BBStr path, BBStr section, bool updateBuffer) {
-	WritePrivateProfileSectionW(
-		BlitzToolbox::UTF8ToWide(section).c_str(), 
-		NULL, 
-		BlitzToolbox::UTF8ToWide(std::filesystem::absolute(path).generic_string()).c_str());
+	std::wstring wPath = BlitzToolbox::UTF8ToWide(NORMALIZE_PATH(path));
+
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	if (ini.LoadFile(wPath.c_str()) == SI_OK) {
+		ini.Delete(section, nullptr);
+		ini.SaveFile(wPath.c_str());
+	}
 
 	if (updateBuffer) IniBuffer[NORMALIZE_PATH(path)].erase(section);
 }
@@ -287,26 +257,20 @@ IniMap<std::string, IniMap<std::string, std::string>>* GetIniMap(BBStr path, boo
 	}
 	else {
 		buffer = new IniMap<std::string, IniMap<std::string, std::string>>();
-		std::ifstream file(path);
-		if (!file.is_open()) return buffer;
 
-		std::string line, section = "";
-		while (std::getline(file, line)) {
-			if (line[0] == ';') continue;
-			if (line[0] == '[' && line[line.length() - 1] == ']') {
-				section = std::string(line, 1, line.length() - 2);
-				continue;
-			}
-			if (line.find('=') != std::string::npos) {
-				if (section == "") continue;
-				std::string key = line.substr(0, line.find('='));
-				if (key[key.length() - 1] == ' ') key = key.substr(0, key.length() - 1);
-				std::string value = line.substr(line.find('=') + 1);
-				if (value[0] == ' ') value = value.substr(1);
-				(*buffer)[section][key] = value;
+		CSimpleIniA ini;
+		ini.SetUnicode();
+		if (ini.LoadFile(BlitzToolbox::UTF8ToWide(path).c_str()) == SI_OK) {
+			CSimpleIniA::TNamesDepend sections;
+			ini.GetAllSections(sections);
+			for (const auto& sec : sections) {
+				CSimpleIniA::TNamesDepend keys;
+				ini.GetAllKeys(sec.pItem, keys);
+				for (const auto& k : keys) {
+					(*buffer)[sec.pItem][k.pItem] = ini.GetValue(sec.pItem, k.pItem, "");
+				}
 			}
 		}
-		file.close();
 	}
 	return buffer;
 }

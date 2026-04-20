@@ -7,6 +7,7 @@
 #include <vector>
 #include <filesystem>
 #include <Windows.h>
+#include <atlstr.h>
 
 #ifdef BLITZ3DTSS
     #define BLITZ3D_RUNTIME_ERROR 0xE0000001
@@ -103,6 +104,24 @@ namespace BlitzToolbox {
         std::string result(size_needed, 0);
         WideCharToMultiByte(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), &result[0], size_needed, nullptr, nullptr);
         return result;
+    }
+
+    void Converter(int src, int dst, CStringA& str) {
+        if (str.IsEmpty()) return;
+
+        int nWideLen = MultiByteToWideChar(src, 0, str, -1, nullptr, 0);
+        if (nWideLen <= 0) return;
+
+        std::vector<wchar_t> wszBuffer(nWideLen);
+        MultiByteToWideChar(src, 0, str, -1, wszBuffer.data(), nWideLen);
+
+        int nMultiLen = WideCharToMultiByte(dst, 0, wszBuffer.data(), -1, nullptr, 0, nullptr, nullptr);
+        if (nMultiLen <= 0) return;
+
+        std::vector<char> szBuffer(nMultiLen);
+        WideCharToMultiByte(dst, 0, wszBuffer.data(), -1, szBuffer.data(), nMultiLen, nullptr, nullptr);
+
+        str = szBuffer.data();
     }
 
 #ifdef BLITZ3DTSS

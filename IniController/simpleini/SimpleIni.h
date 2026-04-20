@@ -1432,7 +1432,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::LoadFile(
 #if __STDC_WANT_SECURE_LIB__ && !_WIN32_WCE
     fp = _wfsopen(a_pwszFile, L"rb", _SH_DENYNO);
 #else // !__STDC_WANT_SECURE_LIB__
-    fp = _wfopen(a_pwszFile, L"rb");
+    fp = _wfsopen(a_pwszFile, L"rb", _SH_DENYNO);
 #endif // __STDC_WANT_SECURE_LIB__
     if (!fp) return SI_FILE;
     SI_Error rc = LoadFile(fp);
@@ -2525,29 +2525,42 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::SaveFile(
 }
 
 #ifdef SI_HAS_WIDE_FILE
+#include <filesystem>
 template<class SI_CHAR, class SI_STRLESS, class SI_CONVERTER>
 SI_Error
-CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::SaveFile(
-    const SI_WCHAR_T *  a_pwszFile,
+CSimpleIniTempl<SI_CHAR, SI_STRLESS, SI_CONVERTER>::SaveFile(
+    const SI_WCHAR_T* a_pwszFile,
     bool                a_bAddSignature
-    ) const
+) const
 {
 #ifdef _WIN32
-    FILE * fp = NULL;
+    std::error_code ec;
+    std::filesystem::path p(a_pwszFile);
+    if (p.has_parent_path()) {
+        std::filesystem::create_directories(p.parent_path(), ec);
+    }
+    FILE* fp = NULL;
 #if __STDC_WANT_SECURE_LIB__ && !_WIN32_WCE
     _wfopen_s(&fp, a_pwszFile, L"wb");
-#else // !__STDC_WANT_SECURE_LIB__
+#else 
     fp = _wfopen(a_pwszFile, L"wb");
-#endif // __STDC_WANT_SECURE_LIB__
+#endif 
+
     if (!fp) return SI_FILE;
     SI_Error rc = SaveFile(fp, a_bAddSignature);
     fclose(fp);
     return rc;
-#else // !_WIN32 (therefore SI_CONVERT_ICU)
+#else 
     char szFile[256];
     u_austrncpy(szFile, a_pwszFile, sizeof(szFile));
+
+    std::filesystem::path p(szFile);
+    if (p.has_parent_path()) {
+        std::filesystem::create_directories(p.parent_path());
+    }
+
     return SaveFile(szFile, a_bAddSignature);
-#endif // _WIN32
+#endif 
 }
 #endif // SI_HAS_WIDE_FILE
 
